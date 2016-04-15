@@ -36,7 +36,12 @@ let create_frame_reader path =
         Option.value_map value
           ~f:(fun value -> Dict.set dict tag value) ~default:dict in
       let open Meta in
-      set tracer self#tracer_meta Dict.empty |>
+      let meta = if reader#get_trace_version = 1L
+        then Dict.empty
+        else match reader#get_frame with
+          | `meta_frame f -> Frame_events.of_meta_frame f
+          | _ -> Dict.empty in
+      set tracer self#tracer_meta meta |>
       set arch self#arch_meta
 
     method next () =
@@ -62,9 +67,9 @@ module Frame_proto : Trace.P = struct
 
   let supports tag =
     let checkers =
-      let open Value.Tag in
-      let open Event in
-      [ same pc_update;
+      let same = Value.Tag.same in
+      Event.[
+        same pc_update;
         same context_switch;
         same code_exec;
         same memory_load;
@@ -74,23 +79,19 @@ module Frame_proto : Trace.P = struct
     List.exists ~f:(fun same -> same tag) checkers
 
   let probe uri =
-    let is_readable uri =
-      try
-        let _reader = create_frame_reader @@ Uri.path uri in
-        true
-      with exn -> false in
     Uri.scheme uri = Some "file" &&
-    Filename.check_suffix (Uri.path uri) ".frames" &&
-    is_readable uri
+    Filename.check_suffix (Uri.path uri) ".frames"
+
+  let probe uri =
+    let r = probe uri in
+    Format.printf "probe %a -> %b\n%!" Uri.pp_hum uri r;
+    r
 end
 
 let build_reader tool uri id =
   let build () =
     let reader = create_frame_reader @@ Uri.path uri in
-    let open Trace.Reader in
-    { tool;
-      meta = reader#meta;
-      next = reader#next } in
+    Trace.Reader.{ tool; meta = reader#meta; next = reader#next } in
   try Ok (build ()) with
   | Unix.Unix_error (err, _, _) -> Result.fail (`System_error err)
   | exn -> Result.fail (`Protocol_error (Error.of_exn  exn))

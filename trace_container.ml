@@ -80,7 +80,7 @@ and first_frame_offset = 48L
 
 let out_trace_version = 1L
 and lowest_supported_version = 1L
-and highest_supported_version = 1L
+and highest_supported_version = 2L
 
 let write_i64 oc i64 = output_string oc (Int64.to_string i64)
 
@@ -264,7 +264,7 @@ class reader filename =
       let () = self#check_end_of_trace "get_frame on non-existant frame" in
       (* The number of frames we copy is bounded by the number of
          frames left in the trace. *)
-      let 
+      let
         num_frames = min requested_frames Int64.(num_frames - current_frame)
       in
       List.rev (foldn64 ~t:1L (fun l n -> self#get_frame :: l) [] num_frames)
