@@ -7,16 +7,20 @@ License:     MIT
 Plugins:     META (0.4)
 BuildTools:  ocamlbuild, bapbuild
 
+Library bfd
+  Path: lib/bfd
+  Modules: Bfd
+  BuildDepends: ppx_deriving.std
+
 Library "bap-frames"
-  Path:            .
-  Modules:         Trace_container, Frame_piqi, Frame_piqi_ext, Arch_bfd
-  BuildDepends:    core_kernel, piqirun.pb, piqirun.ext, piqilib, ppx_jane
+  Path:            lib/frames
+  Modules:         Frame_events, Frame_piqi, Frame_reader
+  BuildDepends:    core_kernel, bap, piqirun.pb, piqirun.ext, piqilib, ppx_jane
   DataFiles:       *.piqi
 
 Library "bap-plugin-frames"
   Path:            plugin
   FindlibName:     bap-plugin-frames
   Modules:         Frame_trace_plugin
-  InternalModules: Frame_events
   BuildDepends:    bap, bap-frames, bap-traces
   XMETADescription: read traces in frames format

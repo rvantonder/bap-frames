@@ -1,3 +1,5 @@
+[@@@deprecated "Don't use this module anymore"]
+
 (**
     Trace container implementation.
 

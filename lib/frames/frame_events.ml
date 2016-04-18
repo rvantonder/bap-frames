@@ -178,31 +178,6 @@ let of_modload_frame arch frm =
   let open Frame.Modload_frame in
   [EF.modload arch frm.module_name frm.low_address frm.high_address]
 
-let tracer {Frame.Tracer.name; args; version} = Tracer.{
-    name; version;
-    args = Array.of_list args;
-  }
-
-let binary {Frame.Target.path; args} = Binary.{
-    path; args = Array.of_list args
-  }
-
-let fstats {Frame.Fstats.size; atime; mtime; ctime} = File_stats.{
-    size; atime; mtime; ctime
-  }
-
-let field tag v d = Dict.set d tag v
-
-let meta_fields meta = Frame.Meta_frame.[
-    field Meta.user meta.user;
-    field Meta.host meta.host;
-    field Meta.tracer @@ tracer meta.tracer;
-    field Meta.binary @@ binary meta.target;
-    field Meta.binary_file_stats @@ fstats meta.fstats;
-  ]
-
-let of_meta_frame frame =
-  meta_fields frame |> List.fold ~init:Dict.empty ~f:(fun d f -> f d)
 
 let of_frame ~context ?arch = function
   | `std_frame frm -> of_std_frame context arch frm

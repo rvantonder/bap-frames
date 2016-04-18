@@ -7,6 +7,7 @@
   .field [.name fstats .type fstats]
   .field [.name user   .type string]
   .field [.name host   .type string]
+  .field [.name time   .type float]
 ]
 
 % description of the trace tool
@@ -21,7 +22,9 @@
 .record [
   .name target
   .field [.name path .type string]
-  .field [.name args .type string .repeated]
+  .field [.name args .type string .repeated .ocaml-array]
+  .field [.name penv .type string .repeated .ocaml-array .optional]
+  .field [.name md5sum .type string .optional]
 ]
 
 % file stats
