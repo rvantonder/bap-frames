@@ -63,9 +63,4 @@
                  .type key-frame
                  .code 6
          ]
-
-         .option [
-                 .type meta-frame
-                 .code 7
-         ]
 ]

@@ -10,6 +10,3 @@ val of_frame :
   context:(Frame.thread_id -> bool) ->
   ?arch:arch ->
   Frame.frame -> Trace.event list
-
-
-val of_meta_frame : Frame.meta_frame -> dict

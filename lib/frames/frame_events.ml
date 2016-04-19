@@ -181,7 +181,8 @@ let of_modload_frame arch frm =
 
 let of_frame ~context ?arch = function
   | `std_frame frm -> of_std_frame context arch frm
-  | `syscall_frame frm -> of_syscall_frame context arch frm
+  | `syscall_frame frm ->
+    of_syscall_frame context arch frm
   | `exception_frame frm -> of_exception_frame context arch frm
   | `taint_intro_frame frm -> []
   | `modload_frame frm -> of_modload_frame arch frm

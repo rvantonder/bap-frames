@@ -1,7 +1,7 @@
 open Bap.Std
-open Frame_piqi
 
 type t
+type frame = Frame_piqi.frame
 
 
 exception Parse_error of string

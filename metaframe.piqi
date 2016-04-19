@@ -22,9 +22,9 @@
 .record [
   .name target
   .field [.name path .type string]
-  .field [.name args .type string .repeated .ocaml-array]
-  .field [.name penv .type string .repeated .ocaml-array .optional]
-  .field [.name md5sum .type string .optional]
+  .field [.name args .type string .repeated]
+  .field [.name penv .type string .repeated ]
+  .field [.name md5sum .type string ]
 ]
 
 % file stats

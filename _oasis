@@ -5,18 +5,24 @@ Synopsis:    data format for execution traces
 Authors:     BAP Team
 License:     MIT
 Plugins:     META (0.4)
-BuildTools:  ocamlbuild, bapbuild
+BuildTools:  ocamlbuild
 
 Library bfd
-  Path: lib/bfd
-  Modules: Bfd
-  BuildDepends: ppx_deriving.std
+  Path:            lib/bfd
+  Modules:         Bfd
+  FindlibName:     bfd
+  CompiledObject:  best
+  BuildDepends:    ppx_deriving.std
+
 
 Library "bap-frames"
   Path:            lib/frames
   Modules:         Frame_events, Frame_piqi, Frame_reader
-  BuildDepends:    core_kernel, bap, piqirun.pb, piqirun.ext, piqilib, ppx_jane
-  DataFiles:       *.piqi
+  FindlibName:     bap-frames
+  BuildTools:      piqi
+  BuildDepends:    bap, bap-traces, bfd, core_kernel, piqirun.pb, ppx_jane, ppx_deriving.std
+  CompiledObject:  best
+  DataFiles:       ../../*.piqi
 
 Library "bap-plugin-frames"
   Path:            plugin

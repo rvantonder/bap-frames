@@ -2,10 +2,9 @@ open Core_kernel.Std
 open Bap.Std
 open Bap_traces.Std
 open Binary_packing
-
+open Format
 
 module Frame = Frame_piqi
-type t = Trace.Reader.t
 
 type field =
   | Magic
@@ -27,10 +26,10 @@ type header = {
 
 type frame = Frame.frame
 
+
 type chan = {
-  piqi : Piqirun.t;
   close : unit -> unit;
-  skip_field : unit -> unit;
+  read  : unit -> frame;
 }
 
 type reader = {
@@ -39,6 +38,8 @@ type reader = {
   chan : chan;
   frames : unit -> frame option;
 }
+
+type t = reader
 
 
 (** Map BFD architecture specification to BAP architecture.
@@ -54,7 +55,7 @@ module Arch = struct
       | Some V5 -> Some `armv5
       | Some (V5T | V5TE | XScale) -> Some `thumbv5
       | Some Unknown -> Some `armv7
-      | Some _ -> None
+      | Some _ -> Some `armv7
       | None -> None)
 
   let mips n = Bfd.Mach.Mips.(match of_enum n with
@@ -120,20 +121,6 @@ let read_header ic =
   | None -> parse_error "malformed header"
   | Some () -> header buf
 
-
-(** [skip_field ch] will skip the sizeof_frame field, as we don't
-    need it at all, since piqi serialization can read the frame without
-    knowing the size.
-    We use `Caml.really_input` instead of pos/seek, as the latter will
-    allocate extra int64 each time, and we're not using [In_channel]'s
-    version of the really_input as it will allocate a closure every
-    time. *)
-let skip_field =
-  let len = field_size in
-  let buf = Bytes.create len in
-  fun ch -> Caml.unsafe_really_input ch buf 0 len
-
-
 let tracer {Frame.Tracer.name; args; version} = Tracer.{
     name; version;
     args = Array.of_list args;
@@ -160,35 +147,45 @@ let meta_fields meta = Frame.Meta_frame.[
 let meta_frame frame =
   meta_fields frame |> List.fold ~init:Dict.empty ~f:(fun d f -> f d)
 
+let read_size =
+  let len = field_size in
+  let buf = Bytes.create len in
+  fun ch ->
+    Caml.really_input ch buf 0 len;
+    int ~buf ~pos:0
 
-let read_meta header {chan; piqi} =
-  if header.version = 1 then Dict.empty
-  else begin
-    skip_field chan;
-    match Frame.parse_frame piqi with
-    | `meta_frame frame -> meta_frame frame
-    | _ -> Dict.empty
-  end
+let read_piqi parse ch =
+  let len = read_size ch in
+  Caml.really_input_string ch len |>
+  Piqirun.init_from_string |>
+  parse
 
-let read_frames {chan;piqi;skip} = fun () ->
+let read_frames input = fun () ->
   try
-    skip_field ();
-    Some (Frame.parse_frame piqi)
+    Some (input.read ())
   with
     Piqirun.IBuf.End_of_buffer | End_of_file ->
-    In_channel.close chan;
+    input.close ();
     None
+
+let read_meta header ch =
+  if header.version = 1 then Dict.empty
+  else meta_frame @@ read_piqi Frame_piqi.parse_meta_frame ch
 
 let create uri =
   let ic = In_channel.create ~binary:true (Uri.path uri) in
   let close = lazy (In_channel.close ic) in
   let close () = Lazy.force close in
-  let piqi = Piqirun.init_from_channel ic in
-  let skip_field () = skip_field ic in
-  let chan = {piqi; close; skip_field} in
   try
     let header = read_header ic in
-    let meta = read_meta header chan in
+    let read () =
+      try read_piqi Frame_piqi.parse_frame ic with exn ->
+        if Int64.(header.toc_off <> 0L &&
+                  In_channel.pos ic >= header.toc_off)
+        then raise End_of_file
+        else raise exn in
+    let chan = {close; read} in
+    let meta = read_meta header ic in
     let frames = read_frames chan in
     {header;meta;frames;chan}
   with exn ->
@@ -200,3 +197,4 @@ let close t = t.chan.close ()
 let meta t = t.meta
 let arch t = Arch.of_bfd t.header.bfd_arch t.header.bfd_mach
 let next_frame t = t.frames ()
+let version t = t.header.version

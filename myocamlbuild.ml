@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 549df0abfdc24176fc4a4646e378e70a) *)
+(* DO NOT EDIT (digest: 41f0a54e6abba61d7fcf1250a3346c74) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -615,7 +615,7 @@ let package_default =
        ];
      lib_c = [];
      flags = [];
-     includes = [("plugin", ["lib/frames"])]
+     includes = [("plugin", ["lib/frames"]); ("lib/frames", ["lib/bfd"])]
   }
   ;;
 
@@ -633,8 +633,8 @@ let oasis_env =
 let nonempty = function (A s) -> String.length s <> 0 | _ -> true
 let expand s = BaseEnvLight.var_expand s oasis_env;;
 
-rule "piqic: piqi -> .ml & _ext.ml"
-  ~prods:["%_piqi.ml"]
+rule "piqic: piqi -> .ml"
+  ~prods:["lib/frames/%_piqi.ml"]
   ~deps:["%.piqi"]
   (fun env _ ->
      Cmd(S (List.filter nonempty [
