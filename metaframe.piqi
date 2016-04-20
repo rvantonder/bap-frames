@@ -15,6 +15,7 @@
   .name tracer
   .field [.name name .type string]
   .field [.name args .type string .repeated]
+  .field [.name envp .type string .repeated]
   .field [.name version .type string]
 ]
 
@@ -23,8 +24,8 @@
   .name target
   .field [.name path .type string]
   .field [.name args .type string .repeated]
-  .field [.name penv .type string .repeated ]
-  .field [.name md5sum .type string ]
+  .field [.name envp .type string .repeated ]
+  .field [.name md5sum .type binary ]
 ]
 
 % file stats

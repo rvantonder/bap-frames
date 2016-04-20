@@ -121,24 +121,30 @@ let read_header ic =
   | None -> parse_error "malformed header"
   | Some () -> header buf
 
-let tracer {Frame.Tracer.name; args; version} = Tracer.{
+let tracer {Frame.Tracer.name; args; envp; version} = Tracer.{
     name; version;
     args = Array.of_list args;
+    envp = Array.of_list envp;
   }
 
-let binary {Frame.Target.path; args} = Binary.{
-    path; args = Array.of_list args
+let binary {Frame.Target.path; args; envp; md5sum} = Binary.{
+    path; md5sum;
+    args = Array.of_list args;
+    envp = Array.of_list envp;
   }
 
 let fstats {Frame.Fstats.size; atime; mtime; ctime} = File_stats.{
     size; atime; mtime; ctime
   }
 
+let tstats {Frame.Meta_frame.time; host; user} = Trace_stats.{
+    time; host; user
+  }
+
 let field tag v d = Dict.set d tag v
 
 let meta_fields meta = Frame.Meta_frame.[
-    field Meta.user meta.user;
-    field Meta.host meta.host;
+    field Meta.trace_stats @@ tstats meta;
     field Meta.tracer @@ tracer meta.tracer;
     field Meta.binary @@ binary meta.target;
     field Meta.binary_file_stats @@ fstats meta.fstats;
