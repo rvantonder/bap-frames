@@ -56,17 +56,19 @@ end = struct
     | `r32 -> Bitvector.of_int64 ~width:32 address
     | `r64 -> Bitvector.of_int64 ~width:64 address
 
-  let move arch tag cell width value =
+  let move king arch tag cell width value =
     let data =
       let endian =
-        Option.value_map arch ~default:Bitvector.LittleEndian ~f:Arch.endian in
+        match kind with
+        | `Reg -> Bitvector.LittleEndian
+        | `Mem -> Option.value_map arch ~default:Bitvector.LittleEndian ~f:Arch.endian in
       let width = match width with 0 -> None | w -> Some w in
       Bitvector.of_binary ?width endian value in
     Move.Fields.create ~cell ~data |>
     Value.create tag
 
   let memory_operation arch tag mo width value =
-    move arch tag (addr_of_address arch mo.Frame.Mem_operand.address)
+    move `Mem arch tag (addr_of_address arch mo.Frame.Mem_operand.address)
       width value
 
   let memory_load arch mo width value =
@@ -76,7 +78,7 @@ end = struct
     memory_operation arch memory_store mo width value
 
   let register_operation arch tag ro width value =
-    move arch tag (Var.create ro.Frame.Reg_operand.name @@ Type.imm width)
+    move `Reg arch tag (Var.create ro.Frame.Reg_operand.name @@ Type.imm width)
       width value
 
   let register_read arch ro width value =
