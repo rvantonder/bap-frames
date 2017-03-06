@@ -56,7 +56,7 @@ end = struct
     | `r32 -> Bitvector.of_int64 ~width:32 address
     | `r64 -> Bitvector.of_int64 ~width:64 address
 
-  let move king arch tag cell width value =
+  let move kind arch tag cell width value =
     let data =
       let endian =
         match kind with
